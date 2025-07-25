@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-attention}",
+            "name": "Debug swift-attention",
+            "program": "${workspaceFolder:swift-attention}/.build/debug/swift-attention",
+            "preLaunchTask": "swift: Build Debug swift-attention"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:swift-attention}",
+            "name": "Release swift-attention",
+            "program": "${workspaceFolder:swift-attention}/.build/release/swift-attention",
+            "preLaunchTask": "swift: Build Release swift-attention"
+        }
+    ]
+}
