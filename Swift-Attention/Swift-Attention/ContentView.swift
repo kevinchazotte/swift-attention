@@ -9,19 +9,21 @@ import SwiftUI
 import FirebaseMessaging
 
 struct ContentView: View {
+    @State private var notifyToken: String = "f2HHSR8BXkwjg6HnCKi2FO:APA91bEIXQbBnFejwRYXMtxqWbmCcoXnZlbIW2ZVXQo16_7yNNpS9XRRzZ5Zs1Lb39k1D3GqqAKZTds39DYuu7Nz-ykxZo4eQPFHpAihzVnwucluXLOfCMc"
     @State private var myToken: String = "Loading..."
     @State private var showToken: Bool = false
-    
+    	
     var body: some View {
         ZStack {
             BackgroundView()
             Button(action: {
-                showToken.toggle()
+                /*showToken.toggle()
                 if showToken {
                     getToken()
-                }
+                }*/
+                sendNotification()
             }) {
-                Text("Press me")
+                Text("boop")
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -57,6 +59,18 @@ struct ContentView: View {
                 }
             }
         }
+    }
+    
+    func sendNotification() {
+        let url = URL(string: "https://yrvpgbhl2iuodk7t5o6yujkwsi0kphqp.lambda-url.us-east-1.on.aws/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload = ["token": notifyToken]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+        
+        URLSession.shared.dataTask(with: request).resume()
     }
 }
 
