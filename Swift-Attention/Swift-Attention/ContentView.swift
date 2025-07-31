@@ -43,19 +43,6 @@ struct ContentView: View {
             }
         }
         .padding()
-        .onAppear {
-            requestNotificationPermission()
-        }
-    }
-    
-    func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            if granted {
-                DispatchQueue.main.async {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            }
-        }
     }
     
     func getToken() {
@@ -63,6 +50,8 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 if let token = token {
                     self.myToken = token
+                } else if let error = error {
+                    self.myToken = "Error: \(error.localizedDescription)"
                 } else {
                     self.myToken = "Error getting token"
                 }
