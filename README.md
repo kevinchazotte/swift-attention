@@ -2,8 +2,6 @@
 
 An iOS app that sends push notifications when users tap the "boop" button.
 
-![image](https://github.com/user-attachments/assets/eced087d-5dff-49ce-8373-d2c127c2ce8d)
-
 ## Overview
 
 Swift-Attention is a SwiftUI-based iOS application with a randomly pixelated background and a central red button. When tapped, the button triggers a push notification to a designated user via Firebase Cloud Messaging.
@@ -47,3 +45,7 @@ Deployment: XCode Cloud, TestFlight
 ## Security Notes
 
 This implementation uses a hardcoded FCM token for simplicity and is intended for limited TestFlight distribution only.
+
+#
+
+<img src="https://github.com/user-attachments/assets/eced087d-5dff-49ce-8373-d2c127c2ce8d" width="256">
