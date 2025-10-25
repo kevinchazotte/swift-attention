@@ -10,3 +10,9 @@ DerivedData/
 **/node_modules/
 
 /env/
+
+Pods/
+
+*.xcodeproj/project.xcworkspace
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
