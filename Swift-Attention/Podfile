@@ -1,0 +1,10 @@
+platform :ios, '18.0'
+
+target 'Swift-Attention' do
+  use_frameworks!
+  use_modular_headers!
+
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
+  pod 'Firebase/Firestore'
+end
