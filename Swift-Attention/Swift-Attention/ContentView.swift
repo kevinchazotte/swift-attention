@@ -3,43 +3,96 @@ import FirebaseMessaging
 import FirebaseFirestore
 
 struct ContentView: View {
-    @State private var notifyToken: String = "f2HHSR8BXkwjg6HnCKi2FO:APA91bEIXQbBnFejwRYXMtxqWbmCcoXnZlbIW2ZVXQo16_7yNNpS9XRRzZ5Zs1Lb39k1D3GqqAKZTds39DYuu7Nz-ykxZo4eQPFHpAihzVnwucluXLOfCMc"
+    @State private var notifyToken: String = ""
     @State private var db = Firestore.firestore()
+    @StateObject private var bluetoothManager = BluetoothManager()
+    @State private var showPairingView = false
+    @State private var isLoadingToken = false
     	
     var body: some View {
         ZStack {
             BackgroundView()
-            Button(action: {
-                syncToken()
-                sendNotification()
-            }) {
-                Text("boop")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.red)
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.3), radius: 3, x: 3, y: 3)
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        isLoadingToken = true
+                        syncToken {
+                            isLoadingToken = false
+                            showPairingView = true
+                        }
+                    }) {
+                        if isLoadingToken {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                        } else {
+                            Text("Pair")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                        }
+                    }
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
+                    .disabled(isLoadingToken)
+                    .padding(.trailing, 20)
+                    .padding(.top, 20)
+                }
+                
+                Spacer()
+                
+                Button(action: {
+                    syncToken { }
+                    sendNotification()
+                }) {
+                    Text("boop")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.3), radius: 3, x: 3, y: 3)
+                }
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.6)).offset(x: 5, y: 5))
+                
+                Spacer()
             }
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.6)).offset(x: 5, y: 5))
         }
         .padding()
+        .onAppear {
+            syncTokenOnAppear()
+        }
+        .sheet(isPresented: $showPairingView) {
+            PairingView(bluetoothManager: bluetoothManager, notifyToken: notifyToken)
+        }
     }
     
-    func syncToken() {
+    func syncToken(completion: @escaping () -> Void) {
         Messaging.messaging().token { token, error in
             DispatchQueue.main.async {
                 if let token = token {
-                    self.myToken = token
-                    registerToken(token)
+                    self.notifyToken = token
+                    self.registerToken(token)
                 } else if let error = error {
-                    self.myToken = "Error: \(error.localizedDescription)"
+                    self.notifyToken = "Error: \(error.localizedDescription)"
+                    print("Error getting FCM token: \(error)")
                 } else {
-                    self.myToken = "Error getting token"
+                    self.notifyToken = "Error getting token"
                 }
+                completion()
             }
         }
+    }
+
+    func syncTokenOnAppear() {
+        syncToken { }
     }
     
     func sendNotification() {
