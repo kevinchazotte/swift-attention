@@ -1,10 +1,3 @@
-//
-//  BackgroundView.swift
-//  Swift-Attention
-//
-//  Created by ec2-user on 31/07/2025.
-//
-
 import SwiftUI
 
 struct BackgroundView: View {

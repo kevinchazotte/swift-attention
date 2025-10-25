@@ -1,10 +1,3 @@
-//
-//  Swift_AttentionApp.swift
-//  Swift-Attention
-//
-//  Created by ec2-user on 30/07/2025.
-//
-
 import SwiftUI
 import FirebaseCore
 import FirebaseMessaging

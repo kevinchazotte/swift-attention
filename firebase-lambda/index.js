@@ -1,38 +1,35 @@
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 // Initialize Firebase Admin (service account JSON as environment variable)
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    ),
   });
 }
 
-exports.handler = async (event) => {
+const db = admin.firestore();
+
+exports.sendNotification = async (req, res) => {
+  const { senderId, title, body } = req.body;
+
   try {
-    const { token, title = "Button Pressed!", body = "Someone pressed the button" } = JSON.parse(event.body || '{}');
-    
+    const senderDoc = await db.collection("users").doc(senderId).get();
+    const partnerId = senderDoc.data().pairedWith;
+    if (!partnerId) throw new Error("No paired user");
+
+    const partnerDoc = await db.collection("users").doc(partnerId).get();
+    const partnerToken = partnerDoc.data().token;
+
     const message = {
-      token: token,
-      notification: {
-        title: title,
-        body: body
-      }
+      token: partnerToken,
+      notification: { title, body },
     };
 
     const response = await admin.messaging().send(message);
-    
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type"
-      },
-      body: JSON.stringify({ success: true, messageId: response })
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message })
-    };
+    res.status(200).send({ success: true, response });
+  } catch (e) {
+    res.status(500).send({ error: e.message });
   }
 };
