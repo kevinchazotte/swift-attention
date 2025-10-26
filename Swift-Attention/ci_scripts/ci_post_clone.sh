@@ -12,11 +12,21 @@ RUBY_VERSION="3.2.2"
 # Install rbenv if not already installed
 if ! command -v rbenv >/dev/null 2>&1; then
     echo "Installing rbenv..."
+
     if command -v brew >/dev/null 2>&1; then
+        # Use Homebrew if available
         brew install rbenv ruby-build
     else
-        echo "Error: Homebrew not found. Please install Homebrew first."
-        exit 1
+        # Install rbenv manually (for Xcode Cloud and other environments without Homebrew)
+        echo "Homebrew not found, installing rbenv manually..."
+
+        if [ ! -d "$HOME/.rbenv" ]; then
+            git clone https://github.com/rbenv/rbenv.git "$HOME/.rbenv"
+        fi
+
+        if [ ! -d "$HOME/.rbenv/plugins/ruby-build" ]; then
+            git clone https://github.com/rbenv/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
+        fi
     fi
 fi
 
@@ -29,7 +39,12 @@ eval "$(rbenv init - bash)"
 # Install Ruby if not already installed
 if ! rbenv versions | grep -q "$RUBY_VERSION"; then
     echo "Installing Ruby $RUBY_VERSION..."
+    # Use ruby-build with optimizations for faster compilation
+    RUBY_CONFIGURE_OPTS="--disable-install-doc --disable-install-rdoc" \
+    MAKE_OPTS="-j$(sysctl -n hw.ncpu)" \
     rbenv install "$RUBY_VERSION"
+else
+    echo "Ruby $RUBY_VERSION is already installed"
 fi
 
 # Set Ruby version
