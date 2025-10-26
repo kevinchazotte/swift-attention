@@ -21,7 +21,9 @@ echo "Installing CocoaPods..."
 gem install cocoapods --no-document
 
 # Navigate to directory with Podfile
-cd Swift-Attention
+cd "$(dirname "$0")/.."
+echo "Current directory: $(pwd)"
+ls -la Podfile 2>/dev/null || echo "ERROR: Podfile not found in $(pwd)"
 
 # Run pod install
 echo "Running pod install..."
