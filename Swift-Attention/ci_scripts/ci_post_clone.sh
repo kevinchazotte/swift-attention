@@ -44,6 +44,10 @@ export PATH="$GEM_HOME/bin:$PATH"
 cd "$(dirname "$0")/.."
 echo "Current directory: $(pwd)"
 
+eval "$(rbenv init -)"
+echo "Verifying Ruby version: $(ruby --version)"
+echo "Which Ruby: $(which ruby)"
+
 # Install Bundler (ensuring it uses the rbenv-installed Ruby)
 if ! command -v bundle >/dev/null 2>&1; then
     echo "Installing bundler..."
