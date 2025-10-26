@@ -3,7 +3,7 @@ import FirebaseFirestore
 import FirebaseMessaging
 
 struct SettingsView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Binding var isPresented: Bool
     @StateObject private var bluetoothManager = BluetoothManager()
     @State private var notifyToken: String = ""
     @State private var showPairingView = false
@@ -20,7 +20,7 @@ struct SettingsView: View {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    presentationMode.wrappedValue.dismiss()
+                    isPresented = false
                 }
 
             // Settings card
@@ -34,7 +34,7 @@ struct SettingsView: View {
                     Spacer()
 
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        isPresented = false
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
@@ -289,5 +289,5 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(isPresented: .constant(true))
 }

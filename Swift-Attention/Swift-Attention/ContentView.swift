@@ -17,13 +17,10 @@ struct ContentView: View {
                     Button(action: {
                         showSettingsView = true
                     }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(Color.blue.opacity(0.8))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
+                        Image(systemName: "gear")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                     }
                     .padding(.trailing, 20)
                     .padding(.top, 20)
@@ -53,9 +50,13 @@ struct ContentView: View {
         .onAppear {
             syncTokenOnAppear()
         }
-        .fullScreenCover(isPresented: $showSettingsView) {
-            SettingsView()
+        .overlay {
+            if showSettingsView {
+                SettingsView(isPresented: $showSettingsView)
+                    .transition(.opacity)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: showSettingsView)
     }
     
     func syncToken(completion: @escaping () -> Void) {
