@@ -14,18 +14,19 @@ struct SettingsView: View {
 
     private var db = Firestore.firestore()
 
+    init(isPresented: Binding<Bool>) {
+        self._isPresented = isPresented
+    }
+
     var body: some View {
         ZStack {
-            // Semi-transparent background
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture {
                     isPresented = false
                 }
 
-            // Settings card
             VStack(alignment: .leading, spacing: 0) {
-                // Header
                 HStack {
                     Text("Settings")
                         .font(.title2)
@@ -46,16 +47,13 @@ struct SettingsView: View {
 
                 Divider()
 
-                // Settings content
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Pairing section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Pairing")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
 
-                            // Current pair status
                             if isPaired, let partnerId = pairedUserId {
                                 VStack(alignment: .leading, spacing: 8) {
                                     HStack {
@@ -88,7 +86,6 @@ struct SettingsView: View {
                                 .cornerRadius(8)
                             }
 
-                            // Pair button
                             Button(action: {
                                 isLoadingToken = true
                                 syncToken {
@@ -114,7 +111,6 @@ struct SettingsView: View {
                             }
                             .disabled(isLoadingToken)
 
-                            // Remove pair button (only show if paired)
                             if isPaired {
                                 Button(action: {
                                     showRemovePairAlert = true
@@ -136,7 +132,6 @@ struct SettingsView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(12)
 
-                        // Device info section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Device Info")
                                 .font(.headline)
