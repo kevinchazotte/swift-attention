@@ -11,7 +11,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;/Users/ec2-user/Documents/swift-attention/Swift-Attention/ci_scripts/ci_post_clone.sh&#10;">
+               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;${SRCROOT}/ci_scripts/ci_post_clone.sh&#10;">
             </ActionContent>
          </ExecutionAction>
       </PreActions>
@@ -83,5 +83,14 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;${SRCROOT}/ci_scripts/ci_post_clone.sh&#10;">
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
    </ArchiveAction>
 </Scheme>

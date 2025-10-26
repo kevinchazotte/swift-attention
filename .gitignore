@@ -12,6 +12,8 @@ DerivedData/
 /env/
 
 Pods/
+**/.bundle/
+**/vendor/
 
 *.xcodeproj/project.xcworkspace
 *.xcodeproj/xcuserdata/
