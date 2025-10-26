@@ -11,39 +11,31 @@ RUBY_VERSION="3.2.2"
 
 # Install rbenv if not already installed
 if ! command -v rbenv >/dev/null 2>&1; then
-    echo "Installing rbenv..."
+    echo "Installing rbenv via git (skipping Homebrew due to Xcode Cloud network restrictions)..."
 
-    if command -v brew >/dev/null 2>&1; then
-        # Use Homebrew if available
-        brew install rbenv ruby-build
+    # Clone rbenv if not already installed
+    if [ ! -d "$HOME/.rbenv/.git" ]; then
+        echo "Cloning rbenv..."
+        if [ -d "$HOME/.rbenv" ]; then
+            echo "Cleaning up incomplete rbenv installation..."
+            rm -rf "$HOME/.rbenv"
+        fi
+        git clone https://github.com/rbenv/rbenv.git "$HOME/.rbenv"
     else
-        # Install rbenv without brew (for Xcode Cloud and other environments without Homebrew)
-        echo "Homebrew not found, installing rbenv with git..."
+        echo "rbenv already installed"
+    fi
 
-        # Clone rbenv if not already installed
-        if [ ! -d "$HOME/.rbenv/.git" ]; then
-            echo "Cloning rbenv..."
-            if [ -d "$HOME/.rbenv" ]; then
-                echo "Cleaning up incomplete rbenv installation..."
-                rm -rf "$HOME/.rbenv"
-            fi
-            git clone https://github.com/rbenv/rbenv.git "$HOME/.rbenv"
-        else
-            echo "rbenv already installed"
+    # Clone ruby-build if not already installed
+    mkdir -p "$HOME/.rbenv/plugins"
+    if [ ! -d "$HOME/.rbenv/plugins/ruby-build/.git" ]; then
+        echo "Cloning ruby-build..."
+        if [ -d "$HOME/.rbenv/plugins/ruby-build" ]; then
+            echo "Cleaning up incomplete ruby-build installation..."
+            rm -rf "$HOME/.rbenv/plugins/ruby-build"
         fi
-
-        # Clone ruby-build if not already installed
-        mkdir -p "$HOME/.rbenv/plugins"
-        if [ ! -d "$HOME/.rbenv/plugins/ruby-build/.git" ]; then
-            echo "Cloning ruby-build..."
-            if [ -d "$HOME/.rbenv/plugins/ruby-build" ]; then
-                echo "Cleaning up incomplete ruby-build installation..."
-                rm -rf "$HOME/.rbenv/plugins/ruby-build"
-            fi
-            git clone https://github.com/rbenv/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
-        else
-            echo "ruby-build already installed"
-        fi
+        git clone https://github.com/rbenv/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
+    else
+        echo "ruby-build already installed"
     fi
 fi
 
