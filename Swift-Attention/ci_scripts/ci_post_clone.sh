@@ -17,15 +17,20 @@ if ! command -v rbenv >/dev/null 2>&1; then
         # Use Homebrew if available
         brew install rbenv ruby-build
     else
-        # Install rbenv manually (for Xcode Cloud and other environments without Homebrew)
-        echo "Homebrew not found, installing rbenv manually..."
+        # Install rbenv without brew (for Xcode Cloud and other environments without Homebrew)
+        echo "Homebrew not found, installing rbenv with git..."
 
-        if [ ! -d "$HOME/.rbenv" ]; then
+        sudo mkdir -p "$HOME/.rbenv/plugins"
+        sudo chown -R $(whoami):staff "$HOME/.rbenv" 2>/dev/null || sudo chown -R $(whoami) "$HOME/.rbenv"
+
+        if [ ! -d "$HOME/.rbenv/.git" ]; then
             git clone https://github.com/rbenv/rbenv.git "$HOME/.rbenv"
+            sudo chown -R $(whoami):staff "$HOME/.rbenv" 2>/dev/null || sudo chown -R $(whoami) "$HOME/.rbenv"
         fi
 
-        if [ ! -d "$HOME/.rbenv/plugins/ruby-build" ]; then
+        if [ ! -d "$HOME/.rbenv/plugins/ruby-build/.git" ]; then
             git clone https://github.com/rbenv/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
+            sudo chown -R $(whoami):staff "$HOME/.rbenv/plugins/ruby-build" 2>/dev/null || sudo chown -R $(whoami) "$HOME/.rbenv/plugins/ruby-build"
         fi
     fi
 fi
@@ -37,12 +42,14 @@ export PATH="$HOME/.rbenv/shims:$PATH"
 eval "$(rbenv init - bash)"
 
 # Install Ruby if not already installed
-if ! rbenv versions | grep -q "$RUBY_VERSION"; then
+if ! rbenv versions 2>/dev/null | grep -q "$RUBY_VERSION"; then
     echo "Installing Ruby $RUBY_VERSION..."
     # Use ruby-build with optimizations for faster compilation
     RUBY_CONFIGURE_OPTS="--disable-install-doc --disable-install-rdoc" \
     MAKE_OPTS="-j$(sysctl -n hw.ncpu)" \
     rbenv install "$RUBY_VERSION"
+
+    sudo chown -R $(whoami):staff "$HOME/.rbenv" 2>/dev/null || sudo chown -R $(whoami) "$HOME/.rbenv"
 else
     echo "Ruby $RUBY_VERSION is already installed"
 fi
@@ -51,6 +58,9 @@ fi
 echo "Setting Ruby version to $RUBY_VERSION..."
 rbenv global "$RUBY_VERSION"
 rbenv rehash
+
+# Ensure shims have proper permissions
+sudo chown -R $(whoami):staff "$HOME/.rbenv/shims" 2>/dev/null || sudo chown -R $(whoami) "$HOME/.rbenv/shims"
 
 # Verify Ruby version
 echo "Ruby version: $(ruby --version)"
