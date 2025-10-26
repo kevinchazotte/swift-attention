@@ -26,8 +26,10 @@ fi
 
 echo "Setting local Ruby version to $RUBY_VERSION"
 rbenv local "$RUBY_VERSION"
+
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export RUBYOPT="-rlogger"
 
 echo "Using rbenv Ruby: $(ruby --version)"
 echo "Which Ruby: $(which ruby)"
