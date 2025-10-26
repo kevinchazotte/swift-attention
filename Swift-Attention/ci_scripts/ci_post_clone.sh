@@ -5,6 +5,9 @@ export RBENV_ROOT="$HOME/.rbenv"
 export PATH="$RBENV_ROOT/bin:$PATH"
 RUBY_VERSION="3.2.2"
 
+cd "$(dirname "$0")/.."
+echo "Current directory: $(pwd)"
+
 echo "=== Installing User-Scoped Ruby ($RUBY_VERSION) via rbenv ==="
 
 if [ ! -d "$RBENV_ROOT" ]; then
@@ -41,10 +44,6 @@ echo "=== Installing CocoaPods dependencies ==="
 export GEM_HOME="$(rbenv prefix)/lib/ruby/gems/$RUBY_VERSION"
 export PATH="$GEM_HOME/bin:$PATH"
 
-cd "$(dirname "$0")/.."
-echo "Current directory: $(pwd)"
-
-eval "$(rbenv init -)"
 echo "Verifying Ruby version: $(ruby --version)"
 echo "Which Ruby: $(which ruby)"
 
