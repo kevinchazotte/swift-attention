@@ -4,6 +4,7 @@ import CoreBluetooth
 struct PairingView: View {
     @ObservedObject var bluetoothManager: BluetoothManager
     let notifyToken: String
+    let onPairingComplete: () -> Void
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -116,7 +117,7 @@ struct PairingView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .top, spacing: 8) {
                             Text("1.")
-                            Text("Both devices tap 'Start Pairing' to begin advertising and scanning")
+                            Text("Both devices tap 'Start Pairing' to begin pairing")
                         }
                         HStack(alignment: .top, spacing: 8) {
                             Text("2.")
@@ -125,10 +126,6 @@ struct PairingView: View {
                         HStack(alignment: .top, spacing: 8) {
                             Text("3.")
                             Text("Tap on your partner's device to connect")
-                        }
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("4.")
-                            Text("Notification tokens will be exchanged automatically and pairing will complete")
                         }
                     }
                     .font(.subheadline)
@@ -145,6 +142,9 @@ struct PairingView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.green)
+                        }
+                        .onAppear {
+                            onPairingComplete()
                         }
                     }
                 }
@@ -196,5 +196,5 @@ struct DeviceRow: View {
 }
 
 #Preview {
-    PairingView(bluetoothManager: BluetoothManager(), notifyToken: "test-token")
+    PairingView(bluetoothManager: BluetoothManager(), notifyToken: "test-token", onPairingComplete: {})
 }

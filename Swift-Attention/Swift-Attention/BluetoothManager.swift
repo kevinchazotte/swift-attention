@@ -15,8 +15,8 @@ class BluetoothManager: NSObject, ObservableObject {
     private var characteristic: CBMutableCharacteristic?
     private var service: CBMutableService?
 
-    private let serviceUUID = CBUUID(string: "12345678-1234-1234-1234-123456789ABC")
-    private let characteristicUUID = CBUUID(string: "87654321-4321-4321-4321-CBA987654321")
+    private let serviceUUID = CBUUID(string: "510CC3AF-6CA8-48EB-BBEC-2E47711D44CB")
+    private let characteristicUUID = CBUUID(string: "1EBF5AE5-EF6D-422B-A39B-3DB2842E6895")
 
     private var currentToken: String = ""
     private var receivedToken: String?
@@ -47,7 +47,7 @@ class BluetoothManager: NSObject, ObservableObject {
             startScanning()
         }
 
-        connectionStatus = "Initializing..."
+        connectionStatus = "Connecting Bluetooth..."
     }
 
     func stopPairing() {
@@ -124,7 +124,7 @@ class BluetoothManager: NSObject, ObservableObject {
             peripheral.writeValue(tokenData, for: characteristic, type: .withoutResponse)
         }
 
-        connectionStatus = "Exchanging tokens..."
+        connectionStatus = "Pairing..."
     }
     
     private func processReceivedToken(_ tokenData: Data) {
@@ -149,7 +149,7 @@ class BluetoothManager: NSObject, ObservableObject {
         }
 
         hasExchangedTokens = true
-        connectionStatus = "Processing pairing..."
+        connectionStatus = "Completing..."
 
         findUserIdByToken(receivedToken) { [weak self] partnerUserId in
             guard let self = self, let partnerUserId = partnerUserId else {
@@ -186,30 +186,96 @@ class BluetoothManager: NSObject, ObservableObject {
     
     private func pairWith(partnerId: String) {
         let userId = UIDevice.current.identifierForVendor!.uuidString
-        let batch = db.batch()
-        let pairId = UUID().uuidString
-        let pairRef = db.collection("pairs").document(pairId)
-        
-        batch.setData([
-            "user1": userId,
-            "user2": partnerId
-        ], forDocument: pairRef)
 
-        let userRef = db.collection("users").document(userId)
-        let partnerRef = db.collection("users").document(partnerId)
-        batch.updateData(["pairedWith": partnerId], forDocument: userRef)
-        batch.updateData(["pairedWith": userId], forDocument: partnerRef)
+        removeExistingPairs(for: userId, and: partnerId) { [weak self] in
+            guard let self = self else { return }
 
-        batch.commit { [weak self] error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    self?.connectionStatus = "Error pairing: \(error.localizedDescription)"
-                } else {
-                    self?.connectionStatus = "Successfully paired!"
-                    self?.isConnected = true
+            let batch = self.db.batch()
+            let pairId = UUID().uuidString
+            let pairRef = self.db.collection("pairs").document(pairId)
+
+            batch.setData([
+                "first": userId,
+                "second": partnerId
+            ], forDocument: pairRef)
+
+            let userRef = self.db.collection("users").document(userId)
+            let partnerRef = self.db.collection("users").document(partnerId)
+
+            batch.setData([
+                "pairedWith": partnerId,
+                "updatedAt": ISO8601DateFormatter().string(from: Date())
+            ], forDocument: userRef, merge: true)
+
+            batch.setData([
+                "pairedWith": userId,
+                "updatedAt": ISO8601DateFormatter().string(from: Date())
+            ], forDocument: partnerRef, merge: true)
+
+            batch.commit { [weak self] error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self?.connectionStatus = "Error pairing: \(error.localizedDescription)"
+                    } else {
+                        self?.connectionStatus = "Successfully paired!"
+                        self?.isConnected = true
+                    }
                 }
             }
         }
+    }
+
+    private func removeExistingPairs(for userId: String, and partnerId: String, completion: @escaping () -> Void) {
+        let batch = db.batch()
+
+        // Remove old pairing for current user
+        db.collection("pairs")
+            .whereField("first", isEqualTo: userId)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+
+                if let documents = snapshot?.documents {
+                    for doc in documents {
+                        batch.deleteDocument(doc.reference)
+                    }
+                }
+
+                self.db.collection("pairs")
+                    .whereField("second", isEqualTo: userId)
+                    .getDocuments { snapshot2, error2 in
+                        if let documents2 = snapshot2?.documents {
+                            for doc in documents2 {
+                                batch.deleteDocument(doc.reference)
+                            }
+                        }
+
+                        // Remove old pairing for partner
+                        self.db.collection("pairs")
+                            .whereField("first", isEqualTo: partnerId)
+                            .getDocuments { snapshot3, error3 in
+                                if let documents3 = snapshot3?.documents {
+                                    for doc in documents3 {
+                                        batch.deleteDocument(doc.reference)
+                                    }
+                                }
+
+                                self.db.collection("pairs")
+                                    .whereField("second", isEqualTo: partnerId)
+                                    .getDocuments { snapshot4, error4 in
+                                        if let documents4 = snapshot4?.documents {
+                                            for doc in documents4 {
+                                                batch.deleteDocument(doc.reference)
+                                            }
+                                        }
+
+                                        // Commit deletions, then proceed
+                                        batch.commit { _ in
+                                            completion()
+                                        }
+                                    }
+                            }
+                    }
+            }
     }
 }
 

@@ -5,9 +5,7 @@ import FirebaseFirestore
 struct ContentView: View {
     @State private var notifyToken: String = ""
     @State private var db = Firestore.firestore()
-    @StateObject private var bluetoothManager = BluetoothManager()
-    @State private var showPairingView = false
-    @State private var isLoadingToken = false
+    @State private var showSettingsView = false
     	
     var body: some View {
         ZStack {
@@ -17,30 +15,16 @@ struct ContentView: View {
                 HStack {
                     Spacer()
                     Button(action: {
-                        isLoadingToken = true
-                        syncToken {
-                            isLoadingToken = false
-                            showPairingView = true
-                        }
+                        showSettingsView = true
                     }) {
-                        if isLoadingToken {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                        } else {
-                            Text("Pair")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                        }
+                        Image(systemName: "gearshape.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Color.blue.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
                     }
-                    .background(Color.blue)
-                    .cornerRadius(8)
-                    .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
-                    .disabled(isLoadingToken)
                     .padding(.trailing, 20)
                     .padding(.top, 20)
                 }
@@ -69,8 +53,8 @@ struct ContentView: View {
         .onAppear {
             syncTokenOnAppear()
         }
-        .sheet(isPresented: $showPairingView) {
-            PairingView(bluetoothManager: bluetoothManager, notifyToken: notifyToken)
+        .fullScreenCover(isPresented: $showSettingsView) {
+            SettingsView()
         }
     }
     
@@ -102,7 +86,7 @@ struct ContentView: View {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let payload = ["senderId": senderId, "title": "boop!", "body": "your partner booped you"]
+        let payload = ["senderId": senderId, "title": "boop", "body": "boop boop boop!"]
         request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
         
         URLSession.shared.dataTask(with: request) { data, response, error in
@@ -117,10 +101,11 @@ struct ContentView: View {
     func registerToken(_ token: String) {
         let userId = UIDevice.current.identifierForVendor!.uuidString
         let userRef = db.collection("users").document(userId)
-        
+
         userRef.setData([
             "token": token,
-            "updatedAt": Timestamp(date: Date())
+            "pairedWith": "",
+            "updatedAt": ISO8601DateFormatter().string(from: Date())
         ], merge: true)
     }
 
@@ -129,15 +114,24 @@ struct ContentView: View {
         let batch = db.batch()
         let pairId = UUID().uuidString
         let pairRef = db.collection("pairs").document(pairId)
+
         batch.setData([
-            "user1": userId,
-            "user2": partnerId
+            "first": userId,
+            "second": partnerId
         ], forDocument: pairRef)
 
         let userRef = db.collection("users").document(userId)
         let partnerRef = db.collection("users").document(partnerId)
-        batch.updateData(["pairedWith": partnerId], forDocument: userRef)
-        batch.updateData(["pairedWith": userId], forDocument: partnerRef)
+
+        batch.setData([
+            "pairedWith": partnerId,
+            "updatedAt": ISO8601DateFormatter().string(from: Date())
+        ], forDocument: userRef, merge: true)
+
+        batch.setData([
+            "pairedWith": userId,
+            "updatedAt": ISO8601DateFormatter().string(from: Date())
+        ], forDocument: partnerRef, merge: true)
 
         batch.commit { error in
             if let error = error {
