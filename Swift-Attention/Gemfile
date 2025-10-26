@@ -1,5 +1,3 @@
 source 'https://rubygems.org'
 
-# Use a CocoaPods version compatible with Ruby 2.6.10
-# CocoaPods 1.11.x is the last version that works well with Ruby 2.6
-gem 'cocoapods', '~> 1.11.3'
+gem 'cocoapods', '~> 1.15.2'
