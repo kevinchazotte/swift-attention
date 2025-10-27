@@ -24,7 +24,7 @@ UI: Randomly pixelated background with centered red "boop" button
 
 Notifications: Firebase Cloud Messaging integration
 
-Token Management: Hardcoded user FCM token for notification targeting to one user
+Token Management: Tokens are stored in a Firebase Firestore database and queried on sending a notification
 
 ### Backend (AWS Lambda + Firebase)
 
@@ -40,12 +40,18 @@ IDE: XCode
 
 Language: Swift with SwiftUI framework
 
-Deployment: XCode Cloud, TestFlight
+Database: Firebase Firestore
+
+Deployment: XCode Cloud, Firebase, App Store Connect
 
 ## Security Notes
 
-This implementation uses a hardcoded FCM token for simplicity and is intended for limited TestFlight distribution only.
+This implementation utilizes Firebase Firestore's database and has all the security guarantees associated with it. Minimal user information is stored and is only stored for required functional purposes.
+
+## Privacy
+
+We collect only the minimal information necessary for app functionality: your device's unique identifier (UUID) and Firebase Cloud Messaging (FCM) token. This data is stored securely in Firebase Firestore and is used solely to enable push notifications and core app features. We do not collect, store, or share any personal information beyond these technical identifiers required for the app to function.
 
 #
 
-<img src="https://github.com/user-attachments/assets/eced087d-5dff-49ce-8373-d2c127c2ce8d" width="256">
+<img src="https://github.com/user-attachments/assets/cae8a32a-74f7-433d-a3d8-9373922958a6" width="256">
