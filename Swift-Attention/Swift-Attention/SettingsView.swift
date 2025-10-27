@@ -184,7 +184,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showPairingView) {
             PairingView(bluetoothManager: bluetoothManager, notifyToken: notifyToken, onPairingComplete: {
                 checkPairStatus()
-            })
+            }, syncToken: syncToken)
         }
         .alert("Remove Pair", isPresented: $showRemovePairAlert) {
             Button("Cancel", role: .cancel) { }

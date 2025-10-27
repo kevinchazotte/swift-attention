@@ -29,7 +29,6 @@ struct ContentView: View {
                 Spacer()
                 
                 Button(action: {
-                    syncToken { }
                     sendNotification()
                 }) {
                     Text("boop")

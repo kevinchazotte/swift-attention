@@ -5,6 +5,7 @@ struct PairingView: View {
     @ObservedObject var bluetoothManager: BluetoothManager
     let notifyToken: String
     let onPairingComplete: () -> Void
+    let syncToken: (@escaping () -> Void) -> Void
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -49,7 +50,9 @@ struct PairingView: View {
                             guard !notifyToken.isEmpty else {
                                 return
                             }
-                            bluetoothManager.startPairing(with: notifyToken)
+                            syncToken {
+                                bluetoothManager.startPairing(with: notifyToken)
+                            }
                         }) {
                             HStack {
                                 Image(systemName: "magnifyingglass")
@@ -196,5 +199,5 @@ struct DeviceRow: View {
 }
 
 #Preview {
-    PairingView(bluetoothManager: BluetoothManager(), notifyToken: "test-token", onPairingComplete: {})
+    PairingView(bluetoothManager: BluetoothManager(), notifyToken: "test-token", onPairingComplete: {}, syncToken: { _ in })
 }
