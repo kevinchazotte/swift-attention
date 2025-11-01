@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+import admin from "firebase-admin";
 
 // Initialize Firebase Admin (service account JSON as environment variable)
 if (!admin.apps.length) {
@@ -11,10 +11,11 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-exports.sendNotification = async (req, res) => {
-  const { senderId, title, body } = req.body;
-
+export const handler = async (event, context) => {
   try {
+    const body = JSON.parse(event.body);
+    const { senderId, title, body: msgBody } = body;
+
     const senderDoc = await db.collection("users").doc(senderId).get();
     const partnerId = senderDoc.data().pairedWith;
     if (!partnerId) throw new Error("No paired user");
@@ -24,12 +25,19 @@ exports.sendNotification = async (req, res) => {
 
     const message = {
       token: partnerToken,
-      notification: { title, body },
+      notification: { title, body: msgBody },
     };
 
     const response = await admin.messaging().send(message);
-    res.status(200).send({ success: true, response });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, response }),
+    };
   } catch (e) {
-    res.status(500).send({ error: e.message });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: e.message }),
+    };
   }
 };
