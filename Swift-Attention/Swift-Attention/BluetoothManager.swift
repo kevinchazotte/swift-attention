@@ -1,6 +1,7 @@
 import Foundation
 import CoreBluetooth
 import FirebaseFirestore
+import FirebaseAuth
 
 class BluetoothManager: NSObject, ObservableObject {
     @Published var isScanning = false
@@ -185,7 +186,7 @@ class BluetoothManager: NSObject, ObservableObject {
     }
     
     private func pairWith(partnerId: String) {
-        let userId = UIDevice.current.identifierForVendor!.uuidString
+        guard let userId = Auth.auth().currentUser?.uid else { return }
 
         removeExistingPairs(for: userId, and: partnerId) { [weak self] in
             guard let self = self else { return }

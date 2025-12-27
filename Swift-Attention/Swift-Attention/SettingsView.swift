@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseFirestore
 import FirebaseMessaging
+import FirebaseAuth
 
 struct SettingsView: View {
     @Binding var isPresented: Bool
@@ -143,7 +144,7 @@ struct SettingsView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                     Spacer()
-                                    Text(UIDevice.current.identifierForVendor?.uuidString.prefix(8) ?? "Unknown")
+                                    Text(Auth.auth().currentUser?.uid.prefix(8) ?? "Unknown")
                                         .font(.subheadline)
                                         .fontWeight(.medium)
                                 }
@@ -212,7 +213,7 @@ struct SettingsView: View {
     }
 
     func checkPairStatus() {
-        let userId = UIDevice.current.identifierForVendor!.uuidString
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         db.collection("users").document(userId).getDocument { document, error in
             DispatchQueue.main.async {
                 if let document = document, document.exists {
@@ -230,7 +231,7 @@ struct SettingsView: View {
     }
 
     func removePair() {
-        let userId = UIDevice.current.identifierForVendor!.uuidString
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         let batch = db.batch()
 
         // Remove pairedWith from current user

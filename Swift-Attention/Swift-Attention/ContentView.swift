@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseMessaging
 import FirebaseFirestore
+import FirebaseAuth
 
 struct ContentView: View {
     @State private var notifyToken: String = ""
@@ -80,26 +81,42 @@ struct ContentView: View {
     }
     
     func sendNotification() {
-        let senderId = UIDevice.current.identifierForVendor!.uuidString
-        let url = URL(string: "https://yrvpgbhl2iuodk7t5o6yujkwsi0kphqp.lambda-url.us-east-1.on.aws/sendNotification")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let payload = ["senderId": senderId, "title": "boop", "body": "boop boop boop!"]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+        guard let user = Auth.auth().currentUser else {
+            return
+        }
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        user.getIDToken { idToken, error in
             if let error = error {
-                print("Error sending: \(error)")
-            } else {
-                print("Notification sent")
+                print("Error getting ID token: \(error)")
+                return
             }
-        }.resume()
+            
+            guard let idToken = idToken else {
+                print("ID token is nil")
+                return
+            }
+            
+            let url = URL(string: "https://yrvpgbhl2iuodk7t5o6yujkwsi0kphqp.lambda-url.us-east-1.on.aws/sendNotification")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+            let payload = ["title": "boop", "body": "boop boop boop!"]
+            request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    print("Error sending: \(error)")
+                } else {
+                    print("Notification sent")
+                }
+            }.resume()
+        }
     }
 
     func registerToken(_ token: String) {
-        let userId = UIDevice.current.identifierForVendor!.uuidString
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         let userRef = db.collection("users").document(userId)
 
         userRef.setData([
@@ -110,7 +127,7 @@ struct ContentView: View {
     }
 
     func pairWith(partnerId: String) {
-        let userId = UIDevice.current.identifierForVendor!.uuidString
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         let batch = db.batch()
         let pairId = UUID().uuidString
         let pairRef = db.collection("pairs").document(pairId)
