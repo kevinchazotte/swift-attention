@@ -7,8 +7,6 @@ struct ContentView: View {
     @State private var notifyToken: String = ""
     @State private var db = Firestore.firestore()
     @State private var showSettingsView = false
-    @State private var authListener: AuthStateDidChangeListenerHandle?
-    @State private var userUID: String?
     @State private var lastRegisteredToken: String?
 
     var body: some View {
@@ -51,13 +49,7 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            setupAuthListener()
-            syncTokenOnAppear()
-        }
-        .onDisappear {
-            if let listener = authListener {
-                Auth.auth().removeStateDidChangeListener(listener)
-            }
+            refreshAndRegisterToken()
         }
         .overlay {
             if showSettingsView {
@@ -68,38 +60,15 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.2), value: showSettingsView)
     }
 
-    func setupAuthListener() {
-        authListener = Auth.auth().addStateDidChangeListener { _, user in
-            if let user = user {
-                self.userUID = user.uid
-                if !self.notifyToken.isEmpty {
-                    self.registerToken(self.notifyToken)
-                }
-            } else {
-                self.userUID = nil
-            }
-        }
-    }
-
-    
-    func syncToken(completion: @escaping () -> Void) {
+    func refreshAndRegisterToken() {
         Messaging.messaging().token { token, error in
-            DispatchQueue.main.async {
-                if let token = token {
-                    self.notifyToken = token
-                    self.registerToken(token)
-                } else if let error = error {
-                    self.notifyToken = "Error: \(error.localizedDescription)"
-                } else {
-                    self.notifyToken = "Error getting token"
-                }
-                completion()
+            if let token = token {
+                self.notifyToken = token
+                self.registerToken(token)
+            } else if let error = error {
+                print("Error fetching FCM token: \(error.localizedDescription)")
             }
         }
-    }
-
-    func syncTokenOnAppear() {
-        syncToken { }
     }
     
     func sendNotification() {
@@ -149,15 +118,36 @@ struct ContentView: View {
         }
 
         let userRef = db.collection("users").document(userId)
-
-        userRef.setData([
-            "token": token,
-            "updatedAt": ISO8601DateFormatter().string(from: Date())
-        ], merge: true) { error in
+        
+        userRef.getDocument { snapshot, error in
             if let error = error {
-                print("Error registering token for UID \(userId): \(error.localizedDescription)")
+                print("Error checking user document: \(error.localizedDescription)")
+                return
+            }
+            
+            if let snapshot = snapshot, snapshot.exists {
+                userRef.updateData([
+                    "token": token,
+                    "updatedAt": ISO8601DateFormatter().string(from: Date())
+                ]) { error in
+                   if let error = error {
+                       print("Error updating token: \(error.localizedDescription)")
+                   } else {
+                       self.lastRegisteredToken = token
+                   }
+                }
             } else {
-                self.lastRegisteredToken = token
+                userRef.setData([
+                    "token": token,
+                    "createdAt": ISO8601DateFormatter().string(from: Date()),
+                    "updatedAt": ISO8601DateFormatter().string(from: Date())
+                ]) { error in
+                    if let error = error {
+                        print("Error creating user document: \(error.localizedDescription)")
+                    } else {
+                        self.lastRegisteredToken = token
+                    }
+                }
             }
         }
     }
@@ -175,7 +165,7 @@ struct ContentView: View {
 
         let userRef = db.collection("users").document(userId)
         let partnerRef = db.collection("users").document(partnerId)
-
+        
         batch.setData([
             "pairedWith": partnerId,
             "updatedAt": ISO8601DateFormatter().string(from: Date())
