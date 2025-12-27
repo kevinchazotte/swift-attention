@@ -13,26 +13,51 @@ const db = admin.firestore();
 
 export const handler = async (event, context) => {
   try {
-    // 1. Extract the token from the Authorization header
     const authHeader = event.headers.Authorization || event.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return { statusCode: 401, body: JSON.stringify({ error: "Unauthorized" }) };
     }
     const idToken = authHeader.split('Bearer ')[1];
 
-    // 2. Verify the token to get the ACTUAL senderId
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const senderId = decodedToken.uid; // This is now secure and verified
+    const senderId = decodedToken.uid;
 
     const body = JSON.parse(event.body);
     const { title, body: msgBody } = body;
 
     const senderDoc = await db.collection("users").doc(senderId).get();
-    const partnerId = senderDoc.data().pairedWith;
-    if (!partnerId) throw new Error("No paired user");
+    if (!senderDoc.exists) {
+      return { 
+        statusCode: 404, 
+        body: JSON.stringify({ error: "Sender profile not found in database. Please ensure you are signed in." }) 
+      };
+    }
+
+    const senderData = senderDoc.data();
+    const partnerId = senderData.pairedWith;
+    if (!partnerId) {
+      return { 
+        statusCode: 400, 
+        body: JSON.stringify({ error: "No partner paired. Please pair with another device first." }) 
+      };
+    }
 
     const partnerDoc = await db.collection("users").doc(partnerId).get();
-    const partnerToken = partnerDoc.data().token;
+    if (!partnerDoc.exists) {
+      return { 
+        statusCode: 404, 
+        body: JSON.stringify({ error: "Partner profile not found. They may have deleted their account." }) 
+      };
+    }
+
+    const partnerData = partnerDoc.data();
+    const partnerToken = partnerData.token;
+    if (!partnerToken) {
+      return { 
+        statusCode: 400, 
+        body: JSON.stringify({ error: "Partner has no active messaging token." }) 
+      };
+    }
 
     const message = {
       token: partnerToken,

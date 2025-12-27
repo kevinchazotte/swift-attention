@@ -7,7 +7,10 @@ struct ContentView: View {
     @State private var notifyToken: String = ""
     @State private var db = Firestore.firestore()
     @State private var showSettingsView = false
-    	
+    @State private var authListener: AuthStateDidChangeListenerHandle?
+    @State private var userUID: String?
+    @State private var lastRegisteredToken: String?
+
     var body: some View {
         ZStack {
             BackgroundView()
@@ -48,7 +51,13 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
+            setupAuthListener()
             syncTokenOnAppear()
+        }
+        .onDisappear {
+            if let listener = authListener {
+                Auth.auth().removeStateDidChangeListener(listener)
+            }
         }
         .overlay {
             if showSettingsView {
@@ -58,6 +67,20 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: showSettingsView)
     }
+
+    func setupAuthListener() {
+        authListener = Auth.auth().addStateDidChangeListener { _, user in
+            if let user = user {
+                self.userUID = user.uid
+                if !self.notifyToken.isEmpty {
+                    self.registerToken(self.notifyToken)
+                }
+            } else {
+                self.userUID = nil
+            }
+        }
+    }
+
     
     func syncToken(completion: @escaping () -> Void) {
         Messaging.messaging().token { token, error in
@@ -67,7 +90,6 @@ struct ContentView: View {
                     self.registerToken(token)
                 } else if let error = error {
                     self.notifyToken = "Error: \(error.localizedDescription)"
-                    print("Error getting FCM token: \(error)")
                 } else {
                     self.notifyToken = "Error getting token"
                 }
@@ -107,9 +129,13 @@ struct ContentView: View {
             
             URLSession.shared.dataTask(with: request) { data, response, error in
                 if let error = error {
-                    print("Error sending: \(error)")
-                } else {
-                    print("Notification sent")
+                    print("Error sending notification: \(error)")
+                } else if let httpResponse = response as? HTTPURLResponse {
+                    if httpResponse.statusCode == 200 {
+                    } else {
+                        let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? "No body"
+                        print("Notification failed with status \(httpResponse.statusCode): \(body)")
+                    }
                 }
             }.resume()
         }
@@ -117,13 +143,23 @@ struct ContentView: View {
 
     func registerToken(_ token: String) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        if token == lastRegisteredToken {
+            return
+        }
+
         let userRef = db.collection("users").document(userId)
 
         userRef.setData([
             "token": token,
-            "pairedWith": "",
             "updatedAt": ISO8601DateFormatter().string(from: Date())
-        ], merge: true)
+        ], merge: true) { error in
+            if let error = error {
+                print("Error registering token for UID \(userId): \(error.localizedDescription)")
+            } else {
+                self.lastRegisteredToken = token
+            }
+        }
     }
 
     func pairWith(partnerId: String) {

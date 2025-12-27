@@ -216,6 +216,7 @@ class BluetoothManager: NSObject, ObservableObject {
             batch.commit { [weak self] error in
                 DispatchQueue.main.async {
                     if let error = error {
+                        print("Error committing pairing batch: \(error.localizedDescription)")
                         self?.connectionStatus = "Error pairing: \(error.localizedDescription)"
                     } else {
                         self?.connectionStatus = "Successfully paired!"

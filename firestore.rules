@@ -7,10 +7,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
-      allow update: if isSignedIn() 
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pairedWith', 'updatedAt']);
+      allow read, create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['token', 'pairedWith', 'updatedAt']);
       allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Needed to find partner by token
     }
 
     match /pairs/{pairId} {
