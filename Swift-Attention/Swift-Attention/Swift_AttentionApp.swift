@@ -54,7 +54,11 @@ struct Swift_AttentionApp: App {
                 }
             }
             .onAppear {
-                startAuthFlow()
+                Auth.auth().addStateDidChangeListener { auth, user in
+                    if user == nil {
+                        startAuthFlow()
+                    }
+                }
             }
         }
     }

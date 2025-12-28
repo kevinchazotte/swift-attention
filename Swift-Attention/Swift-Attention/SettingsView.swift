@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var isPaired = false
     @State private var pairedUserId: String? = nil
     @State private var showRemovePairAlert = false
+    @State private var showSignOutAlert = false
 
     private var db = Firestore.firestore()
 
@@ -134,6 +135,30 @@ struct SettingsView: View {
                         .cornerRadius(12)
 
                         VStack(alignment: .leading, spacing: 12) {
+                            Text("Account")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+
+                            Button(action: {
+                                showSignOutAlert = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    Text("Sign Out")
+                                }
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red)
+                                .cornerRadius(8)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Device Info")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
@@ -194,6 +219,15 @@ struct SettingsView: View {
             }
         } message: {
             Text("Are you sure you want to remove your current pairing? You'll need to pair again to send notifications.")
+        }
+        .alert("Sign Out", isPresented: $showSignOutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Sign Out", role: .destructive) {
+                try? Auth.auth().signOut()
+                isPresented = false
+            }
+        } message: {
+            Text("Are you sure you want to sign out?")
         }
     }
 
