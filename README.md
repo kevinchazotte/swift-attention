@@ -4,49 +4,41 @@ An iOS app that sends push notifications when users tap the "boop" button.
 
 ## Overview
 
-Swift-Attention is a SwiftUI-based iOS application with a randomly pixelated background and a central red button. When tapped, the button triggers a push notification to a designated user via Firebase Cloud Messaging.
+Swift-Attention is a SwiftUI-based iOS application with a randomly pixelated background and a central red button. When tapped, the button triggers a push notification to a paired user via Firebase Cloud Messaging.
 
 ## Features
 
-SwiftUI interface with randomly generated background
-
-Push notification system using Firebase Cloud Messaging
-
-AWS Lambda backend for notification routing
-
-TestFlight distribution for select users
+- **Randomized UI**: Randomly generated pixelated background.
+- **Push Notifications**: Sends secure alerts via Firebase Cloud Messaging.
+- **Device Pairing**: Bluetooth-based exchange of notification tokens to pair devices.
+- **Anonymous Authentication**: Uses Firebase Anonymous Auth for secure yet frictionless user management.
 
 ## Architecture
 
 ### iOS App (Swift/SwiftUI)
 
-UI: Randomly pixelated background with centered red "boop" button
-
-Notifications: Firebase Cloud Messaging integration
-
-Token Management: Tokens are stored in a Firebase Firestore database and queried on sending a notification
+- **UI**: Randomly pixelated background with centered red "boop" button.
+- **Authentication**: Firebase Anonymous Authentication.
+- **Pairing**: Bluetooth Low Energy (BLE) for local token exchange, backed by Firestore for persistence.
+- **Notifications**: Firebase Cloud Messaging integration.
 
 ### Backend (AWS Lambda + Firebase)
 
-Runtime: Node.js with firebase-admin package
-
-Trigger: HTTP requests from iOS app containing notification token
+- **Runtime**: Node.js with firebase-admin package.
+- **Trigger**: HTTP requests from iOS app containing notification token.
+- **Database**: Firebase Firestore for user and pair management.
 
 ## Development Environment
 
-Platform: AWS EC2 Mac instance
-
-IDE: XCode
-
-Language: Swift with SwiftUI framework
-
-Database: Firebase Firestore
-
-Deployment: XCode Cloud, Firebase, App Store Connect
+- **Platform**: AWS EC2 Mac instance / Local macOS
+- **IDE**: Xcode
+- **Language**: Swift with SwiftUI framework
+- **Database**: Firebase Firestore
+- **Deployment**: Xcode Cloud, Firebase, App Store Connect
 
 ## Security Notes
 
-This implementation utilizes Firebase Firestore's database and has all the security guarantees associated with it. Minimal user information is stored and is only stored for required functional purposes.
+This implementation utilizes Firebase Anonymous Authentication to secure database access. Firestore security rules ensure that users can only access their own data and can only pair with mutual consent.
 
 ## Privacy
 
