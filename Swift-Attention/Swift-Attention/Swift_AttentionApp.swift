@@ -55,7 +55,7 @@ struct Swift_AttentionApp: App {
             }
             .onAppear {
                 Auth.auth().addStateDidChangeListener { auth, user in
-                    if user == nil {
+                    if user == nil || appState == .launch {
                         startAuthFlow()
                     }
                 }
@@ -66,10 +66,28 @@ struct Swift_AttentionApp: App {
     func startAuthFlow() {
         appState = .authenticating
         
-        if Auth.auth().currentUser != nil {
-            requestNotificationPermissions()
+        if let user = Auth.auth().currentUser {
+            // Verify the user is still valid on the server
+            user.getIDTokenResult(forcingRefresh: true) { result, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("Stale or invalid user session: \(error.localizedDescription)")
+                        // If token refresh fails, sign out and re-auth
+                        try? Auth.auth().signOut()
+                        self.performAnonymousSignIn()
+                    } else {
+                        self.requestNotificationPermissions()
+                    }
+                }
+            }
         } else {
-            Auth.auth().signInAnonymously { authResult, error in
+            performAnonymousSignIn()
+        }
+    }
+    
+    private func performAnonymousSignIn() {
+        Auth.auth().signInAnonymously { authResult, error in
+            DispatchQueue.main.async {
                 if let error = error {
                     print("Error signing in anonymously: \(error.localizedDescription)")
                     appState = .error(error.localizedDescription)
