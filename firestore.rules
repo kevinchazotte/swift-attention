@@ -7,16 +7,29 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['token', 'pairedWith', 'updatedAt']);
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // Needed to find partner by token
+      allow get, create: if isSignedIn() && request.auth.uid == userId;
+      allow list: if isSignedIn();
+      allow update: if isSignedIn() && (
+        request.auth.uid == userId || 
+        (
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pairedWith', 'updatedAt']) &&
+           (
+             request.resource.data.pairedWith == request.auth.uid ||
+             (request.resource.data.pairedWith == "" && resource.data.pairedWith == request.auth.uid)
+           )
+        )
+      );
     }
 
     match /pairs/{pairId} {
-      allow create: if isSignedIn();
-      allow read: if isSignedIn() && (resource.data.first == request.auth.uid || resource.data.second == request.auth.uid);
+      allow create: if isSignedIn() && (
+        request.resource.data.first == request.auth.uid || 
+        request.resource.data.second == request.auth.uid
+      );
+      allow read, delete: if isSignedIn() && (
+        resource.data.first == request.auth.uid || 
+        resource.data.second == request.auth.uid
+      );
     }
   }
 }
