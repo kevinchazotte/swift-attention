@@ -16,7 +16,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
     }
 }
 
-enum AppState {
+enum AppState: Equatable {
     case launch
     case authenticating
     case requestingNotifications
